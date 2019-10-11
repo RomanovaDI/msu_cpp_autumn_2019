@@ -8,3 +8,6 @@ test: calc
 
 calc: calc.cpp
 	$(CC) -o calc calc.cpp $(FLAGS)
+
+clean:
+	rm calc

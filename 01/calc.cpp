@@ -3,11 +3,10 @@
 #include <map>
 #include <sstream>
 #include <string>
-#include <stdlib.h>
 
 enum Token_value : char {
-  NUMBER,           END,
-  PLUS='+',         MINUS='-',              MUL='*',        DIV='/',
+  NUMBER,           END,               ERR,
+  PLUS='+',         MINUS='-',         MUL='*',        DIV='/',
   PRINT=';',
 };
 
@@ -30,7 +29,7 @@ double expr(std::istream*, bool);    // Обязательное объявле�
 double error(const std::string& error_message) {
   ++no_of_errors;
   std::cerr << "error: " << error_message << std::endl;
-  exit(no_of_errors);
+  return 1;
 }
 
 Token_value get_token(std::istream* input) {
@@ -60,7 +59,7 @@ Token_value get_token(std::istream* input) {
       return curr_tok = NUMBER;
     default:
       error("Bad Token");
-      return curr_tok = PRINT;
+      return curr_tok = ERR;
   }
 }
 
@@ -76,7 +75,7 @@ double prim(std::istream* input, bool get) {
 
   switch (curr_tok) {
     case NUMBER: {
-      double v = number_value;
+      int v = number_value;
       get_token(input);
       return v;
     }
@@ -90,20 +89,19 @@ double prim(std::istream* input, bool get) {
 // term() - умножение и деление.
 double term(std::istream* input, bool get) {
   double left = prim(input, get);
-
   for ( ; ; ) {
     switch (curr_tok) {
       case MUL:
         left *= prim(input, true);
         break;
       case DIV:
-        if (double d = prim(input, true)) {
-            left /= d;
-            break;
+        if (int d = prim(input, true)) {
+          left /= d;
+          break;
         }
         return error("Divide by 0");
       default:
-          return left;
+        return left;
     }
   }
 }
@@ -111,7 +109,6 @@ double term(std::istream* input, bool get) {
 // expr() - сложение и вычитание.
 double expr(std::istream* input, bool get) {
   double left = term(input, get);
-
   for ( ; ; ) {
     switch (curr_tok) {
       case PLUS:
@@ -147,6 +144,10 @@ int main(int argc, char* argv[]) {
     // Снимает ответственность expr() за обработку пустых выражений.
     if (curr_tok == PRINT) {
       continue;
+    }
+
+    if (curr_tok == ERR) {
+      break;
     }
 
     // expr() -> term() -> prim() -> expr() ...
