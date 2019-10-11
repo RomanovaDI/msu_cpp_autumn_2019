@@ -18,8 +18,8 @@ enum Number_value : char {
 };
 
 Token_value curr_tok = PRINT;        // Хранит последний возврат функции get_token().
-int number_value;                 // Хранит целый литерал или литерал с плавающей запятой.
-int no_of_errors;                    // Хранит количество встречаемых ошибок.
+double number_value;                 // Хранит целый литерал или литерал с плавающей запятой.
+int error_flag;                    // Хранит флаг ошибки.
 
 double expr(std::istream*, bool);    // Обязательное объявление.
 
@@ -27,7 +27,7 @@ double expr(std::istream*, bool);    // Обязательное объявле�
 
 // Функция error() имеет тривиальный характер: инкрементирует счётчик ошибок.
 double error(const std::string& error_message) {
-  ++no_of_errors;
+  error_flag = 1;
   std::cerr << "error: " << error_message << std::endl;
   return 1;
 }
@@ -75,7 +75,7 @@ double prim(std::istream* input, bool get) {
 
   switch (curr_tok) {
     case NUMBER: {
-      int v = number_value;
+      double v = number_value;
       get_token(input);
       return v;
     }
@@ -95,7 +95,7 @@ double term(std::istream* input, bool get) {
         left *= prim(input, true);
         break;
       case DIV:
-        if (int d = prim(input, true)) {
+        if (double d = prim(input, true)) {
           left /= d;
           break;
         }
@@ -154,5 +154,5 @@ int main(int argc, char* argv[]) {
     std::cout << expr(input, false);
   }
 
-  return no_of_errors;
+  return error_flag;
 }
