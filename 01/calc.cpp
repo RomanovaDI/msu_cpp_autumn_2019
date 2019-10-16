@@ -19,7 +19,7 @@ enum Number_value : char {
 
 Token_value curr_tok = PRINT;        // Хранит последний возврат функции get_token().
 double number_value;                 // Хранит целый литерал или литерал с плавающей запятой.
-int error_flag;                    // Хранит флаг ошибки.
+int error_flag;                      // Хранит флаг ошибки.
 
 double expr(std::istream*, bool);    // Обязательное объявление.
 
@@ -154,5 +154,6 @@ int main(int argc, char* argv[]) {
     std::cout << expr(input, false);
   }
 
+  delete input;
   return error_flag;
 }
