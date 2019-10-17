@@ -17,22 +17,52 @@ enum Number_value : char {
   NUM9='9',
 };
 
-Token_value curr_tok = PRINT;        // Хранит последний возврат функции get_token().
-double number_value;                 // Хранит целый литерал или литерал с плавающей запятой.
-int error_flag;                      // Хранит флаг ошибки.
-
-double expr(std::istream*, bool);    // Обязательное объявление.
+class calculator{
+  private:
+    Token_value curr_tok = PRINT;        // Хранит последний возврат функции get_token().
+    double number_value;                 // Хранит целый литерал или литерал с плавающей запятой.
+    int error_flag = 0;                  // Хранит флаг ошибки.
+  public:
+    Token_value curr_tok_val();                 // Возвращает значение curr_tok.
+    //double expr(std::istream*, bool);           // Обязательное объявление.
+    double error(int err_num);                  // Функция error() устанавливает флаг ошибки.
+    int ret_err_flag();                         // Возвращает состояние флага ошибки.
+    Token_value get_token(std::istream* input); // Берёт символ из потока и анализирует его.
+    double prim(std::istream* input, bool get); // prim() - обрабатывает первичные выражения.
+    double term(std::istream* input, bool get); // term() - умножение и деление.
+    double expr(std::istream* input, bool get); // expr() - сложение и вычитание.
+};
 
 /****************************************************************************/
 
-// Функция error() имеет тривиальный характер: инкрементирует счётчик ошибок.
-double error(const std::string& error_message) {
+// Возвращает значение curr_tok.
+Token_value calculator::curr_tok_val() {
+  return curr_tok;
+}
+
+// Возвращает состояние флага ошибки.
+int calculator::ret_err_flag() {
+  return error_flag;
+}
+
+// Функция error() устанавливает флаг ошибки.
+double calculator::error(int err_num) {
   error_flag = 1;
-  std::cerr << "error: " << error_message << std::endl;
+  std::string err_message;
+  if (err_num == 0)
+    err_message = "Divide by 0";
+  if (err_num == 1)
+    err_message = "Bad Token";
+  if (err_num == 2)
+    err_message = "primary expected";
+  if (err_num == 3)
+    err_message = "Error input";
+  std::cerr << "error: " << err_message << std::endl;
   return 1;
 }
 
-Token_value get_token(std::istream* input) {
+// Берёт символ из потока и анализирует его.
+Token_value calculator::get_token(std::istream* input) {
   char ch;
 
   do {    // Пропустить все пробельные символы кроме '\n'.
@@ -58,7 +88,7 @@ Token_value get_token(std::istream* input) {
       *input >> number_value; // И считать всю лексему.
       return curr_tok = NUMBER;
     default:
-      error("Bad Token");
+      error(1);
       return curr_tok = ERR;
   }
 }
@@ -68,7 +98,7 @@ Token_value get_token(std::istream* input) {
  * очередной лексемы. */
 
 // prim() - обрабатывает первичные выражения.
-double prim(std::istream* input, bool get) {
+double calculator::prim(std::istream* input, bool get) {
   if (get) {
     get_token(input);
   }
@@ -82,12 +112,12 @@ double prim(std::istream* input, bool get) {
     case MINUS:
       return -prim(input, true);
     default:
-      return error("primary expected");
+      return error(2);
   }
 }
 
 // term() - умножение и деление.
-double term(std::istream* input, bool get) {
+double calculator::term(std::istream* input, bool get) {
   double left = prim(input, get);
   for ( ; ; ) {
     switch (curr_tok) {
@@ -99,7 +129,7 @@ double term(std::istream* input, bool get) {
           left /= d;
           break;
         }
-        return error("Divide by 0");
+        return error(0);
       default:
         return left;
     }
@@ -107,7 +137,7 @@ double term(std::istream* input, bool get) {
 }
 
 // expr() - сложение и вычитание.
-double expr(std::istream* input, bool get) {
+double calculator::expr(std::istream* input, bool get) {
   double left = term(input, get);
   for ( ; ; ) {
     switch (curr_tok) {
@@ -126,34 +156,36 @@ double expr(std::istream* input, bool get) {
 int main(int argc, char* argv[]) {
   std::istream* input = nullptr; // Указатель на поток.
 
+  calculator lets_calc;
+
   switch (argc) {
     case 2:
       input = new std::istringstream(argv[1]);
       break;
     default:
-      error("Error input");
+      lets_calc.error(3);
       return 1;
   }
 
   while (*input) {
-    get_token(input);
-    if (curr_tok == END) {
+    lets_calc.get_token(input);
+    if (lets_calc.curr_tok_val() == END) {
       break;
     }
 
     // Снимает ответственность expr() за обработку пустых выражений.
-    if (curr_tok == PRINT) {
+    if (lets_calc.curr_tok_val() == PRINT) {
       continue;
     }
 
-    if (curr_tok == ERR) {
+    if (lets_calc.curr_tok_val() == ERR) {
       break;
     }
 
     // expr() -> term() -> prim() -> expr() ...
-    std::cout << expr(input, false);
+    std::cout << lets_calc.expr(input, false);
   }
 
   delete input;
-  return error_flag;
+  return lets_calc.ret_err_flag();
 }
