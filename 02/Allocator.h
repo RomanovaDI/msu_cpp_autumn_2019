@@ -2,7 +2,7 @@
 
 class LinearAllocator {
 private:
-    void* pointerStart = nullptr;
+    char* pointerStart = nullptr;
     size_t sizeAll = 0;
     size_t sizeUsed = 0;
     size_t allign = 8;

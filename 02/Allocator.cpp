@@ -7,27 +7,33 @@
 
 LinearAllocator::LinearAllocator(size_t maxSize) {
     sizeAll = maxSize % allign ? (maxSize / allign + 1) * allign : maxSize;
-    if (!(pointerStart = malloc(sizeAll))) {
-        sizeAll = 0;
-        std::cout << "malloc failed: " << std::strerror(errno) << '\n';
+    try {
+        pointerStart = new char[sizeAll];
+    }
+    catch (std::bad_alloc& ba) {
+        std::cerr << "error: " << ba.what() << '\n';
     }
 }
 
 LinearAllocator::~LinearAllocator() {
     if (pointerStart)
-        free(pointerStart);
+        delete pointerStart;
 }
 
 void* LinearAllocator::alloc(size_t size) {
     size_t allign = 8;
     size_t tmp_size = size % allign ? size + 1 : size;
-    if (tmp_size > sizeAll - sizeUsed) {
-        std::cout << "not enough memory" << '\n';
+    try {
+        if (tmp_size > sizeAll - sizeUsed)
+            throw "not enough memory";
+        void *tmp_return = pointerStart + sizeUsed;
+        sizeUsed += tmp_size;
+        return tmp_return;
+    }
+    catch (const char *str) {
+        std::cerr << "error: " << str << '\n';
         return nullptr;
     }
-    void *tmp_return = pointerStart + sizeUsed;
-    sizeUsed += tmp_size;
-    return tmp_return;
 }
 
 void LinearAllocator::reset() {

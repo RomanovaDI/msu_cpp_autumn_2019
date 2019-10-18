@@ -23,9 +23,11 @@ int check_LinearAllocator() {
 }
 
 int checkLinearAllocatorErrors() {
-    LinearAllocator allocator(500);
-    allocator.alloc(600);
-    allocator.alloc(501);
+    LinearAllocator* allocator = new LinearAllocator(500);
+    allocator->alloc(600);
+    allocator->alloc(501);
+    delete allocator;
+    LinearAllocator* allocator1 = new LinearAllocator(1000000000000000000);
     return 0;
 }
 
