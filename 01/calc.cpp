@@ -57,6 +57,8 @@ double calculator::error(int err_num) {
     err_message = "primary expected";
   if (err_num == 3)
     err_message = "Error input";
+  if (err_num == 4)
+    err_message = "Empty input";
   std::cerr << "error: " << err_message << std::endl;
   return 1;
 }
@@ -167,24 +169,24 @@ int main(int argc, char* argv[]) {
       return 1;
   }
 
-  while (*input) {
-    lets_calc.get_token(input);
-    if (lets_calc.curr_tok_val() == END) {
-      break;
-    }
-
-    // Снимает ответственность expr() за обработку пустых выражений.
-    if (lets_calc.curr_tok_val() == PRINT) {
-      continue;
-    }
-
-    if (lets_calc.curr_tok_val() == ERR) {
-      break;
-    }
-
-    // expr() -> term() -> prim() -> expr() ...
-    std::cout << lets_calc.expr(input, false);
+  lets_calc.get_token(input);
+  if (lets_calc.curr_tok_val() == END) {
+    lets_calc.error(4);
   }
+  // Снимает ответственность expr() за обработку пустых выражений.
+  if (lets_calc.curr_tok_val() == PRINT) {
+    lets_calc.error(4);
+  }
+  if (lets_calc.curr_tok_val() == ERR) {
+    lets_calc.error(3);
+  }
+
+  // expr() -> term() -> prim() -> expr() ...
+  double result = 0;
+  if (!lets_calc.ret_err_flag())
+    result = lets_calc.expr(input, false);
+  if (!lets_calc.ret_err_flag())
+    std::cout << result;
 
   delete input;
   return lets_calc.ret_err_flag();
