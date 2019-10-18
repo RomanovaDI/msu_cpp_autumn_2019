@@ -22,12 +22,20 @@ int check_LinearAllocator() {
     return 0;
 }
 
-int checkLinearAllocatorErrors() {
+int checkLinearAllocatorErrors1() {
     LinearAllocator* allocator = new LinearAllocator(500);
     allocator->alloc(600);
+    return 0;
+}
+
+int checkLinearAllocatorErrors2() {
+    LinearAllocator* allocator = new LinearAllocator(500);
     allocator->alloc(501);
-    delete allocator;
-    LinearAllocator* allocator1 = new LinearAllocator(1000000000000000000);
+    return 0;
+}
+
+int checkLinearAllocatorErrors3() {
+    LinearAllocator* allocator = new LinearAllocator(1000000000000000000);
     return 0;
 }
 
@@ -50,8 +58,21 @@ int check_Malloc() {
 }
 
 int main(void) {
-    check_LinearAllocator();
-    check_Malloc();
-    checkLinearAllocatorErrors();
+    int (* func_arr[])() = {
+        &check_LinearAllocator,
+        &check_Malloc,
+        &checkLinearAllocatorErrors1,
+        &checkLinearAllocatorErrors2,
+        &checkLinearAllocatorErrors3};
+    for (int i = 0; i < sizeof(func_arr) / sizeof(func_arr[0]); i++) {
+        std::cout << "test " << i << ": ";
+        try {
+            func_arr[i]();
+            std::cout << "ok" << '\n';
+        }
+        catch (std::exception& e) {
+            std::cerr << "error: " << e.what() << '\n';
+        }
+    }
     return 0;
 }
