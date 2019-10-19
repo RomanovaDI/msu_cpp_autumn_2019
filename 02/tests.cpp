@@ -23,19 +23,19 @@ int check_LinearAllocator() {
 }
 
 int checkLinearAllocatorErrors1() {
-    LinearAllocator* allocator = new LinearAllocator(500);
-    allocator->alloc(600);
+    LinearAllocator allocator(500);
+    allocator.alloc(600);
     return 0;
 }
 
 int checkLinearAllocatorErrors2() {
-    LinearAllocator* allocator = new LinearAllocator(500);
-    allocator->alloc(501);
+    LinearAllocator allocator(500);
+    allocator.alloc(501);
     return 0;
 }
 
 int checkLinearAllocatorErrors3() {
-    LinearAllocator* allocator = new LinearAllocator(1000000000000000000);
+    LinearAllocator allocator(1000000000000000000);
     return 0;
 }
 
@@ -52,6 +52,9 @@ int check_Malloc() {
     std::memset(mass4, 1, number_of_int / 5 * sizeof(int));
     int* mass5 = (int*) malloc(number_of_int / 5 * sizeof(int));
     std::memset(mass5, 1, number_of_int / 5 * sizeof(int));
+    free(mass5);
+    free(mass4);
+    free(mass3);
     free(mass2);
     free(mass1);
     return 0;

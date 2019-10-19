@@ -2,7 +2,6 @@
 #include <cerrno>
 #include <stdlib.h>
 #include <cstring>
-#include "Timer.h"
 #include "Allocator.h"
 
 LinearAllocator::LinearAllocator(size_t maxSize) {
