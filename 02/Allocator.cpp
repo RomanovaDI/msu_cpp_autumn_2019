@@ -11,7 +11,7 @@ LinearAllocator::LinearAllocator(size_t maxSize) {
 
 LinearAllocator::~LinearAllocator() {
     if (pointerStart)
-        delete pointerStart;
+        delete[] pointerStart;
 }
 
 void* LinearAllocator::alloc(size_t size) {
