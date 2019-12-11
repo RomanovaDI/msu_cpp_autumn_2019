@@ -1,53 +1,55 @@
 #pragma once
 
-std::string format(int n, std::string ss)
-{
-    std::string s1 = "{";
-    std::string s2 = "}";
-    if ((ss.find(s1) != std::string::npos) || (ss.find(s2) != std::string::npos))
-        throw std::runtime_error("Error");
-    return ss;
-}
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <cctype>
 
 template <class T>
-std::string format(int n, std::string ss, T var)
+std::string to_string(T&& x)
 {
-    std::ostringstream s1;
-    s1 << "{" << n << "}";
-    std::string sold = s1.str();
-    std::ostringstream s2;
-    s2 << var;
-    std::string snew = s2.str();
-    while (ss.find(sold) != std::string::npos)
-        ss.replace(ss.find(sold), sold.length(), snew);
-    return format(++n, ss);
+	std::stringstream ss;
+	ss << x;
+	return ss.str();
 }
 
-template <class T, class... Args>
-std::string format(int n, std::string ss, T var, Args... args)
+template <class... argsT>
+std::string format(const std::string& str, argsT&&... obj)
 {
-    std::ostringstream s1;
-    s1 << "{" << n++ << "}";
-    std::string sold = s1.str();
-    std::ostringstream s2;
-    s2 << var;
-    std::string snew = s2.str();
-    while (ss.find(sold) != std::string::npos)
-        ss.replace(ss.find(sold), sold.length(), snew);
-    return format(n, ss, args...);
-}
-
-std::string format(const char* text)
-{
-    int n = 0;
-    std::string ss(text);
-    return format(n, ss);
-}
-
-template <class... Args>
-std::string format(const char* text, Args... args)
-{
-    int n = 0;
-    std::string ss(text);
-    return format(n, ss, args...);
+	std::vector<std::string> args{to_string(std::forward<argsT>(obj))...};
+	std::ostringstream res;
+	for (size_t i = 0; i < str.length(); ++i) {
+		if (str[i] == '{') {
+			i++;
+			if (str[i] == '}') {
+				throw std::runtime_error("No index");
+			}
+			size_t id;
+			std::string tmp_num;
+			while(str[i] != '}' && i < str.length()) {
+				if (std::isdigit(str[i])) {
+					tmp_num += str[i];
+					++i;
+				} else {
+					throw std::runtime_error("Wrong index");
+				}
+			}
+			if (i == str.length()) {
+				throw std::runtime_error("Wrong format");
+			}
+			id = std::stoull(tmp_num);
+			if (id < args.size()) {
+				res << args[id];
+			} else {
+				throw std::runtime_error("Big index");
+			}
+		} else {
+			if (str[i] == '}') {
+				throw std::runtime_error("Wrong format");
+			}
+			res << str[i];
+		}	
+	}
+	return res.str();
 }
