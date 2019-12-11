@@ -13,7 +13,7 @@ struct Data
     uint64_t c;
 
     template <class Serializer>
-    Error serialize(Serializer& serializer)
+    Error serialize(Serializer&& serializer)
     {
         return serializer(a, b, c);
     }
@@ -51,19 +51,15 @@ int main()
     Deserializer d3(s3);
     checkTrue(d3.load(y) == Error::CorruptedArchive);
 
-    auto s4 = std::stringstream("1 true -3");
+    auto s4 = std::stringstream("false 1");
     Deserializer d4(s4);
     checkTrue(d4.load(y) == Error::CorruptedArchive);
 
-    auto s5 = std::stringstream("false 1");
-    Deserializer d5(s5);
-    checkTrue(d5.load(y) == Error::CorruptedArchive);
-
     y = { 0, true, 0 };
 
-    auto s6 = std::stringstream("100 false 500");
-    Deserializer d6(s6);
-    checkTrue(d6.load(y) == Error::NoError);
+    auto s5 = std::stringstream("100 false 500");
+    Deserializer d5(s5);
+    checkTrue(d5.load(y) == Error::NoError);
 
     checkEqual(y.a, 100);
     checkEqual(y.b, false);
