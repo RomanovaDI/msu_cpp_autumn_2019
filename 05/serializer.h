@@ -1,6 +1,9 @@
 // serializer.h
 #pragma once
-#include <typeinfo>
+//#include <typeinfo>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 enum class Error
 {
@@ -12,7 +15,9 @@ class Serializer
 {
     static constexpr char Separator = ' ';
     std::ostream& out_;
+
 public:
+
     explicit Serializer(std::ostream& out)
         : out_(out)
     {
@@ -25,60 +30,46 @@ public:
     }
 
     template <class... ArgsT>
-    Error operator()(ArgsT... args)
+    Error operator()(ArgsT&&... args)
     {
-        return process(args...);
+        return process(std::forward<ArgsT>(args)...);
     }
     
 private:
-    // process использует variadic templates
+
     template <class T>
     Error process(T&& val)
     {
-        if (typeid(val) == typeid(uint64_t))
-            out_ << val << Separator;
-        else if (typeid(val) == typeid(bool))
-            if (val)
-                out_ << "true" << Separator;
-            else if (!val)
-                out_ << "false" << Separator;
-            else
-                return Error::CorruptedArchive;
-        else
-            return Error::CorruptedArchive;
-        return Error::NoError;
+        return print_stream(val);
     }
 
     template <class T, class... Args>
     Error process(T&& val, Args&&... args)
     {
-        if (typeid(val) == typeid(uint64_t))
-            out_ << val << Separator;
-        else if (typeid(val) == typeid(bool))
-            if (val)
-                out_ << "true" << Separator;
-            else if (!val)
-                out_ << "false" << Separator;
-            else
-                return Error::CorruptedArchive;
-        else
+        if (process(val) == Error::CorruptedArchive)
             return Error::CorruptedArchive;
         return process(std::forward<Args>(args)...);
     }
-};
 
-uint64_t convert(std::string text)
-{
-    uint64_t value;
-    std::istringstream iss(text);
-    iss >> value;
-    return value;
-}
+    Error print_stream(uint64_t val)
+    {
+        out_ << val << Separator;
+        return (out_) ? Error::NoError : Error::CorruptedArchive;
+    }
+
+    Error print_stream(bool val)
+    {
+        out_ << std::boolalpha << val << Separator;
+        return (out_) ? Error::NoError : Error::CorruptedArchive;
+    }
+};
 
 class Deserializer
 {
     std::istream& in_;
+
 public:
+
     explicit Deserializer(std::istream& in)
         : in_(in)
     {
@@ -91,54 +82,36 @@ public:
     }
 
     template <class... ArgsT>
-    Error operator()(ArgsT&... args)
+    Error operator()(ArgsT&&... args)
     {
-        return process(args...);
+        return process(std::forward<ArgsT>(args)...);
     }
 
 private:
-    // process использует variadic templates
+
     template <class T>
-    Error process(T& val)
+    Error process(T&& val)
     {
-        std::string text;
-        in_ >> text;
-        if (text.compare("true") == 0) {
-            if (typeid(val) != typeid(bool))
-                return Error::CorruptedArchive;
-            val = true;
-        } else if (text.compare("false") == 0) {
-            if (typeid(val) != typeid(bool))
-                return Error::CorruptedArchive;
-            val = false;
-        } else if (text.compare(std::to_string(convert(text))) == 0) {
-            if (typeid(val) != typeid(uint64_t))
-                return Error::CorruptedArchive;
-            val = convert(text);
-        } else
-            return Error::CorruptedArchive;
-        return Error::NoError;
+        return load_val(val);
     }
 
     template <class T, class... Args>
-    Error process(T& val, Args&... args)
+    Error process(T&& val, Args&&... args)
     {
-        std::string text;
-        in_ >> text;
-        if (text.compare("true") == 0) {
-            if (typeid(val) != typeid(bool))
-                return Error::CorruptedArchive;
-            val = true;
-        } else if (text.compare("false") == 0) {
-            if (typeid(val) != typeid(bool))
-                return Error::CorruptedArchive;
-            val = false;
-        } else if (text.compare(std::to_string(convert(text))) == 0) {
-            if (typeid(val) != typeid(uint64_t))
-                return Error::CorruptedArchive;
-            val = convert(text);
-        } else
+        if (process(val) == Error::CorruptedArchive)
             return Error::CorruptedArchive;
-        return process(args...);
+        return process(std::forward<Args>(args)...);
+    }
+
+    Error load_val(uint64_t& val)
+    {
+        in_ >> val;
+        return (in_) ? Error::NoError : Error::CorruptedArchive;
+    }
+
+    Error load_val(bool& val)
+    {
+        in_ >> std::boolalpha >> val;
+        return (in_) ? Error::NoError : Error::CorruptedArchive;
     }
 };
